@@ -1,0 +1,9 @@
+{
+  "name": "workflow-automator",
+  "version": "0.1.0",
+  "description": "Analyzes your project's tech stack and produces a prioritized automation report with ready-to-copy implementations for CI, git hooks, dependency management, releases, and more",
+  "author": {
+    "name": "Brett Schmidt",
+    "email": ""
+  }
+}
