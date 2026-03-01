@@ -1,0 +1,74 @@
+# .github/dependabot.yml
+# Automated dependency updates via GitHub Dependabot.
+# Drop this file at .github/dependabot.yml — no other setup required.
+#
+# Dependabot will open PRs to update dependencies on the schedule below.
+# Your CI will run on those PRs, so only safe updates get merged.
+#
+# Tip: Combine with a GitHub Actions "auto-merge" workflow to merge
+# patch-level updates automatically after CI passes.
+
+version: 2
+
+updates:
+  # ── npm / yarn / pnpm ─────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: UTC
+    open-pull-requests-limit: 10
+    groups:
+      # Group all patch/minor updates into a single PR to reduce noise
+      non-breaking:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+      - automated
+
+  # ── pip / poetry / pipenv ─────────────────────────────────────────────────
+  # - package-ecosystem: pip
+  #   directory: /
+  #   schedule:
+  #     interval: weekly
+  #     day: monday
+  #     time: "09:00"
+  #   groups:
+  #     non-breaking:
+  #       update-types: [minor, patch]
+  #   labels: [dependencies, automated]
+
+  # ── Go modules ────────────────────────────────────────────────────────────
+  # - package-ecosystem: gomod
+  #   directory: /
+  #   schedule:
+  #     interval: weekly
+  #   labels: [dependencies, automated]
+
+  # ── Cargo (Rust) ──────────────────────────────────────────────────────────
+  # - package-ecosystem: cargo
+  #   directory: /
+  #   schedule:
+  #     interval: weekly
+  #   labels: [dependencies, automated]
+
+  # ── Docker base images ────────────────────────────────────────────────────
+  # - package-ecosystem: docker
+  #   directory: /
+  #   schedule:
+  #     interval: weekly
+  #   labels: [dependencies, automated]
+
+  # ── GitHub Actions versions ───────────────────────────────────────────────
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - ci

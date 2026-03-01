@@ -1,0 +1,152 @@
+# .github/workflows/ci.yml
+# Universal CI pipeline template — edit the sections marked with ✏️
+#
+# Features:
+#   - Runs on every push and pull request
+#   - Caches dependencies for fast re-runs
+#   - Separate jobs that run in parallel (lint, test, build)
+#   - Matrix testing across Node/Python versions
+#   - Upload test coverage to Codecov
+
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  # Cancel old runs when a new commit is pushed
+
+# ────────────────────────────────────────────────────────────────────────────
+# NODE.JS / JAVASCRIPT / TYPESCRIPT
+# ────────────────────────────────────────────────────────────────────────────
+jobs:
+  node-lint-and-test:
+    name: Lint & Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    # ✏️ Adjust or remove the matrix to suit your needs
+    strategy:
+      matrix:
+        node: [20, 22]
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm   # ✏️ Change to 'yarn' or 'pnpm' if needed
+
+      - name: Install dependencies
+        run: npm ci   # ✏️ Use 'yarn install --frozen-lockfile' or 'pnpm install --frozen-lockfile'
+
+      - name: Lint
+        run: npm run lint   # ✏️ Adjust script name
+
+      - name: Type check
+        run: npm run typecheck   # ✏️ Remove if no TypeScript
+
+      - name: Test
+        run: npm test -- --coverage   # ✏️ Adjust flags for your test runner
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: matrix.node == 20   # Only upload once
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # PYTHON
+  # ────────────────────────────────────────────────────────────────────────────
+  # python-lint-and-test:
+  #   name: Lint & Test (Python ${{ matrix.python }})
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       python: ["3.11", "3.12", "3.13"]
+  #     fail-fast: false
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: ${{ matrix.python }}
+  #         cache: pip
+  #     - run: pip install -e ".[dev]"    # ✏️ Adjust install command
+  #     - run: ruff check .
+  #     - run: ruff format --check .
+  #     - run: mypy .
+  #     - run: pytest --cov --cov-report=xml
+  #     - uses: codecov/codecov-action@v4
+  #       if: matrix.python == '3.12'
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # GO
+  # ────────────────────────────────────────────────────────────────────────────
+  # go-lint-and-test:
+  #   name: Lint & Test (Go ${{ matrix.go }})
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       go: ["1.22", "1.23"]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-go@v5
+  #       with:
+  #         go-version: ${{ matrix.go }}
+  #         cache: true
+  #     - uses: golangci/golangci-lint-action@v6
+  #       with:
+  #         version: latest
+  #     - run: go test ./... -race -coverprofile=coverage.out
+  #     - uses: codecov/codecov-action@v4
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # RUST
+  # ────────────────────────────────────────────────────────────────────────────
+  # rust-lint-and-test:
+  #   name: Lint & Test (Rust)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         components: clippy, rustfmt
+  #     - uses: Swatinem/rust-cache@v2
+  #     - run: cargo fmt --check
+  #     - run: cargo clippy -- -D warnings
+  #     - run: cargo test
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # SECURITY — runs for all stacks
+  # ────────────────────────────────────────────────────────────────────────────
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dependency vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          severity: HIGH,CRITICAL
+          exit-code: 1

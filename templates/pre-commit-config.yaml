@@ -1,0 +1,94 @@
+# .pre-commit-config.yaml
+# Drop this file at the root of your repo, then run:
+#   pip install pre-commit
+#   pre-commit install
+#
+# Every `git commit` will now run these checks automatically.
+# To run manually against all files: pre-commit run --all-files
+
+repos:
+  # ── Universal ──────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace       # Remove trailing whitespace
+      - id: end-of-file-fixer         # Ensure files end with a newline
+      - id: check-yaml                # Validate YAML syntax
+      - id: check-json                # Validate JSON syntax
+      - id: check-toml                # Validate TOML syntax
+      - id: check-merge-conflict      # Catch leftover merge conflict markers
+      - id: check-added-large-files   # Block files > 500 KB from being committed
+        args: ['--maxkb=500']
+      - id: detect-private-key        # Prevent committing private keys
+      - id: mixed-line-ending         # Normalize line endings
+        args: ['--fix=lf']
+
+  # ── Secrets detection ──────────────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  # ── Conventional commits ───────────────────────────────────────────────────
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, docs, style, refactor, test, chore, ci, build, perf, revert]
+
+  # ── JavaScript / TypeScript ────────────────────────────────────────────────
+  # Uncomment the block that matches your stack:
+
+  # - repo: https://github.com/pre-commit/mirrors-eslint
+  #   rev: v9.18.0
+  #   hooks:
+  #     - id: eslint
+  #       files: \.[jt]sx?$
+  #       types: [file]
+  #       additional_dependencies:
+  #         - eslint@9
+  #         - '@eslint/js@9'
+
+  # - repo: https://github.com/pre-commit/mirrors-prettier
+  #   rev: v4.0.0-alpha.8
+  #   hooks:
+  #     - id: prettier
+  #       types_or: [javascript, jsx, ts, tsx, css, json, yaml, markdown]
+
+  # ── Python ─────────────────────────────────────────────────────────────────
+  # - repo: https://github.com/astral-sh/ruff-pre-commit
+  #   rev: v0.8.4
+  #   hooks:
+  #     - id: ruff          # Linter
+  #       args: [--fix]
+  #     - id: ruff-format   # Formatter (replaces black)
+
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.13.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies: [types-requests, types-PyYAML]
+
+  # ── Go ─────────────────────────────────────────────────────────────────────
+  # - repo: https://github.com/dnephin/pre-commit-golang
+  #   rev: v0.5.1
+  #   hooks:
+  #     - id: go-fmt
+  #     - id: go-vet
+  #     - id: go-unit-tests
+
+  # ── Rust ───────────────────────────────────────────────────────────────────
+  # - repo: local
+  #   hooks:
+  #     - id: cargo-fmt
+  #       name: cargo fmt
+  #       entry: cargo fmt --
+  #       language: system
+  #       types: [rust]
+  #     - id: cargo-clippy
+  #       name: cargo clippy
+  #       entry: cargo clippy -- -D warnings
+  #       language: system
+  #       types: [rust]
+  #       pass_filenames: false

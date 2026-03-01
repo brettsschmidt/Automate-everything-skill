@@ -1,0 +1,165 @@
+# Taskfile.yml
+# A unified task runner for your project using Task (https://taskfile.dev).
+# Install: brew install go-task  |  scoop install task  |  go install github.com/go-task/task/v3/cmd/task@latest
+#
+# Usage:
+#   task          → list all tasks
+#   task dev      → start development server
+#   task lint     → run linters
+#   task test     → run tests
+#   task check    → run all quality gates (lint + typecheck + test)
+#   task build    → build for production
+#   task clean    → remove build artifacts
+
+version: "3"
+
+vars:
+  # ✏️ Change these for your project
+  APP_NAME: myapp
+  DOCKER_IMAGE: myorg/myapp
+
+dotenv: [.env, .env.local]  # Load .env files automatically
+
+tasks:
+  # ── Default: show task list ──────────────────────────────────────────────
+  default:
+    cmds:
+      - task --list
+    silent: true
+
+  # ── Development ──────────────────────────────────────────────────────────
+  dev:
+    desc: Start development server with hot reload
+    cmds:
+      - npm run dev   # ✏️ Adjust for your stack
+    # Python:  uvicorn app.main:app --reload
+    # Go:      air
+    # Rust:    cargo watch -x run
+
+  # ── Code quality ─────────────────────────────────────────────────────────
+  lint:
+    desc: Run all linters
+    cmds:
+      - npm run lint   # ✏️ Adjust
+    # Python:  ruff check . && ruff format --check .
+    # Go:      golangci-lint run ./...
+    # Rust:    cargo clippy -- -D warnings
+
+  lint:fix:
+    desc: Run linters and auto-fix issues
+    cmds:
+      - npm run lint -- --fix   # ✏️ Adjust
+    # Python:  ruff check --fix . && ruff format .
+
+  format:
+    desc: Format all code
+    cmds:
+      - npm run format   # ✏️ Adjust (e.g. prettier --write .)
+    # Python:  ruff format .
+    # Go:      gofmt -w .
+    # Rust:    cargo fmt
+
+  typecheck:
+    desc: Run static type checking
+    cmds:
+      - npm run typecheck   # ✏️ Adjust (e.g. tsc --noEmit)
+    # Python:  mypy .
+
+  # ── Testing ──────────────────────────────────────────────────────────────
+  test:
+    desc: Run tests
+    cmds:
+      - npm test   # ✏️ Adjust
+    # Python:  pytest
+    # Go:      go test ./...
+    # Rust:    cargo test
+
+  test:watch:
+    desc: Run tests in watch mode (re-run on file changes)
+    cmds:
+      - npm run test:watch   # ✏️ Adjust (vitest --watch, pytest-watch, etc.)
+
+  test:coverage:
+    desc: Run tests with coverage report
+    cmds:
+      - npm test -- --coverage   # ✏️ Adjust
+    # Python:  pytest --cov --cov-report=html && open htmlcov/index.html
+
+  # ── All quality gates (run before pushing) ───────────────────────────────
+  check:
+    desc: Run lint + typecheck + tests (the full CI suite locally)
+    deps: [lint, typecheck, test]
+
+  # ── Build ────────────────────────────────────────────────────────────────
+  build:
+    desc: Build for production
+    cmds:
+      - npm run build   # ✏️ Adjust
+    # Python:  python -m build
+    # Go:      go build -o bin/{{.APP_NAME}} ./cmd/{{.APP_NAME}}
+    # Rust:    cargo build --release
+
+  # ── Docker ───────────────────────────────────────────────────────────────
+  docker:build:
+    desc: Build Docker image
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}}:latest .
+
+  docker:run:
+    desc: Run Docker container locally
+    cmds:
+      - docker run --rm -p 3000:3000 --env-file .env {{.DOCKER_IMAGE}}:latest
+
+  docker:push:
+    desc: Push Docker image to registry
+    cmds:
+      - docker push {{.DOCKER_IMAGE}}:latest
+
+  # ── Database / migrations ────────────────────────────────────────────────
+  db:migrate:
+    desc: Run database migrations
+    cmds:
+      - npm run migrate   # ✏️ Adjust (prisma migrate dev, alembic upgrade head, etc.)
+
+  db:reset:
+    desc: Reset database and re-seed
+    prompt: This will DESTROY all local database data. Continue?
+    cmds:
+      - npm run db:reset   # ✏️ Adjust
+
+  # ── Dependency management ────────────────────────────────────────────────
+  deps:install:
+    desc: Install all dependencies
+    cmds:
+      - npm ci   # ✏️ Adjust
+
+  deps:update:
+    desc: Update dependencies interactively
+    cmds:
+      - npx npm-check-updates --interactive   # ✏️ Adjust
+
+  deps:audit:
+    desc: Check for security vulnerabilities
+    cmds:
+      - npm audit   # ✏️ Adjust (pip-audit, cargo audit, etc.)
+
+  # ── Cleanup ──────────────────────────────────────────────────────────────
+  clean:
+    desc: Remove build artifacts and caches
+    cmds:
+      - rm -rf dist/ .next/ out/ coverage/ node_modules/.cache/
+    # Python:  find . -type d -name __pycache__ -exec rm -rf {} + && rm -rf .mypy_cache dist/ .ruff_cache
+    # Rust:    cargo clean
+
+  # ── Git helpers ──────────────────────────────────────────────────────────
+  git:setup-hooks:
+    desc: Install pre-commit hooks
+    cmds:
+      - pip install pre-commit
+      - pre-commit install
+      - pre-commit install --hook-type commit-msg
+
+  release:dry-run:
+    desc: Preview what the next release would look like
+    cmds:
+      - npx semantic-release --dry-run   # ✏️ Adjust for your release tool
